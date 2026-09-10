@@ -1,0 +1,35 @@
+# Xcode & Swift
+.build/
+DerivedData/
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+*.xcuserstate
+project.xcworkspace
+xcuserdata/
+*.xcbkptlist
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.ipa
+*.app
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Temporary & Local Scratch
+scratch/
+*.tmp
+*.log
