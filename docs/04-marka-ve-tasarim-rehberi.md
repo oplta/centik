@@ -58,12 +58,12 @@ Uygulamanın resmi kurumsal logosu; **katsayısal (1.2x geometrik çarpanlı) ba
 
 ### Ana Logo: Basamaklı Çentik (`assets/centik-logo.svg`)
 * **Konum & Çentik Formu:** Tıpkı MacBook donanım çentiği gibi doğrudan ekranın en üst kenarından (`y = 0`) başlar ve gerçek donanım çentiği omuz kavislerini (*notch shoulders*) taşır.
-* **Katsayısal Dalga Dinamiği (1.2x):** Basamak kalınlıkları merkezde ince ve odaklanmış başlar (`22px`), dışa doğru **1.2 katlanarak** bir ses/su dalgası gibi açılarak genişler (`22px → 27px → 34px → 42px → 52px → 64px → 78px → 96px`).
+* **Katsayısal Dalga Dinamiği (1.2x):** 9 kademe, merkezde ince ve odaklanmış başlar (`22px`), dışa doğru **~1.2x katlanarak** bir ses/su dalgası gibi açılarak genişler. Kademeler arası 8 geçiş aralığı: (`22px → 27px → 34px → 42px → 52px → 64px → 78px → 96px`).
 * **Alt Çizgi & Geometri:** Her kademenin tabanı dümdüz yatay bir çentik çizgisi ve yumuşak köşe kavisleridir.
 * **Renk Basamakları:** Derin gece lacivertinden (`#091428`), kraliyet mavisinden (`#003494`), canlı elektrik mavisinden (`#0066FF`), cam göbeğinden (`#00B4FF`) en içteki açık buz mavisine (`#E0F2FE`) kadar 9 kademeli organik geçiş.
 * **Sadelik:** Sıfır gölge, sıfır kamera noktası veya yabancı süs; tamamen saf, dinamik çentik dalgası.
 
-Önizleme için: `assets/preview.html`
+Önizleme için: `docs/preview.html`
 
 ---
 

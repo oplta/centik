@@ -10,7 +10,7 @@ Bu belge, Çentik'in v1 MVP sürümünde yer alacak 6 temel özelliği ve bunlar
 
 | Modül | Görev | Tetikleyici / Etkileşim |
 | :--- | :--- | :--- |
-| **1. Ada İskeleti (Notch Shell)** | Ekran çentiğini sarar veya hap şeklinde yüzer | Fare üzerine gelince (0.2s hover) veya kısayol (`⌥Space`) |
+| **1. Ada İskeleti (Notch Shell)** | Ekran çentiğini sarar veya hap şeklinde yüzer | Fare üzerine gelince (0.18s hover) veya kısayol (`⌥Space`) |
 | **2. Dosya Rafı (FileShelf)** | Dosyaları geçici tutar, pencereler arası taşır | Dosyayı adaya sürükleyip bırakma (Drag & Drop) |
 | **3. Now Playing & Medya** | Çalan parçayı gösterir, durdurur/geçer | Müzik çalarken sol/sağ ada kanatlarında minyatür durum |
 | **4. Sistem HUD** | Ses, ekran ve klavye ışığı seviyelerini gösterir | Ses/parlaklık tuşlarına basıldığında adadan yumuşak genişleme |
@@ -25,8 +25,8 @@ Bu belge, Çentik'in v1 MVP sürümünde yer alacak 6 temel özelliği ve bunlar
 * **Algılama:** Ekran çentiği varsa çentiğin tam altına ve yanlarına yapışan cam ada (OLED derin modda `#07090E`, elektrik mavisi vurgular `#0066FF`).
 * **Hap Modu (Pill Mode):** Çentiksiz ekranlarda (harici monitör veya M1 Air) menü çubuğunun hemen altında süzülen 80x28px boyutlarında zarif bir kapsül.
 * **Açılma & Kapanma:**
-  * Fare çentik bölgesine girdiğinde 0.2 saniye gecikmeyle (yanlışlıkla açılmayı önleyen sönümleme) aşağıya doğru 60fps akıcı yay animasyonuyla genişler.
-  * Fare adadan çıktığında 0.4 saniye sonra kapanır.
+  * Fare çentik bölgesine girdiğinde 0.18 saniye gecikmeyle (yanlışlıkla açılmayı önleyen sönümleme, bkz. `06-tasarim-dili` §4.2) aşağıya doğru 60fps akıcı yay animasyonuyla genişler.
+  * Fare adadan çıktığında 0.35 saniye sonra kapanır.
   * `Esc` tuşuna basıldığında anında kapanır.
   * Tam ekran (Full Screen) uygulamalara geçildiğinde çentik otomatik olarak gizlenir.
   * Ekran kaydı ve ekran görüntüsü alırken ada görünmez yapılır (`sharingType = .none`).

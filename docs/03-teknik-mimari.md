@@ -73,7 +73,7 @@ final class NotchPanel: NSPanel {
 ```
 
 ### Çentik ve Ekran Tespiti (Screen Detection)
-* **Çentikli Ekran:** `NSScreen.main?.safeAreaInsets.top ?? 0 > 0` kontrolü ile MacBook çentiği tespit edilir. Çentiğin genişliği ve yüksekliği `auxiliaryTopLeftArea` ve `auxiliaryTopRightArea` koordinat farkından net olarak hesaplanır.
+* **Çentikli Ekran:** `NSScreen.auxiliaryTopLeftArea` ve `auxiliaryTopRightArea` genişlikleri toplamı ekran genişliğinden küçükse çentik var demektir (bkz. `Shell/ScreenManager.swift`). `safeAreaInsets` iOS API'sidir, macOS'ta kullanılmaz.
 * **Hap Modu (Non-notch Fallback):** Harici bir monitöre geçildiğinde veya çentiksiz bir Mac'te uygulama otomatik olarak `ScreenManager` üzerinden yüzen hap (floating pill) moduna geçer.
 
 ---
@@ -99,7 +99,7 @@ Rakiplerin en büyük hatası (NotchNook'un %8-12 idle CPU harcaması), sürekli
 Kaynak kod yapısı aşağıdaki modüler mimariyi takip eder:
 
 ```
-Centik/
+./ (repo kökü = Centik/)
 ├── App/
 │   ├── CentikApp.swift            # Uygulama giriş noktası (LSUIElement = true)
 │   └── AppDelegate.swift          # Menü bar durumu ve yaşam döngüsü
