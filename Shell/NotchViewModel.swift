@@ -8,11 +8,22 @@ final class NotchViewModel: ObservableObject {
     @Published var isHovered: Bool = false
     
     // Boyut kuralları
-    var collapsedWidth: CGFloat = 200
-    var collapsedHeight: CGFloat = 34
-    
     let expandedWidth: CGFloat = 400
     let expandedHeight: CGFloat = 220
+    
+    func currentWidth(hasNotch: Bool, notchWidth: CGFloat) -> CGFloat {
+        if isExpanded {
+            return expandedWidth
+        }
+        return hasNotch ? max(notchWidth, 185) + 16 : 170
+    }
+    
+    func currentHeight(hasNotch: Bool, notchHeight: CGFloat) -> CGFloat {
+        if isExpanded {
+            return expandedHeight
+        }
+        return hasNotch ? notchHeight + 6 : 32
+    }
     
     private var hoverTask: Task<Void, Never>?
     private var closeTask: Task<Void, Never>?

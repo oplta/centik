@@ -1,6 +1,21 @@
 import AppKit
 import SwiftUI
 
+/// Şeffaf alanlarda tıklamaların arkadaki pencerelere/masaüstüne geçmesini sağlayan özel hosting view.
+final class PassthroughHostingView<Content: View>: NSHostingView<Content> {
+    var activeBoundsProvider: (() -> NSRect)?
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let targetRect = activeBoundsProvider?() else {
+            return super.hitTest(point)
+        }
+        if targetRect.contains(point) {
+            return super.hitTest(point)
+        }
+        return nil
+    }
+}
+
 /// Menü çubuğu durumu ve uygulama yaşam döngüsü.
 /// v1: NotchPanel penceresini ve ada yaşam döngüsünü yönetir.
 @MainActor
@@ -8,29 +23,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var notchPanel: NotchPanel?
     private let screenManager = ScreenManager()
     private let viewModel = NotchViewModel()
-    private var eventMonitor: Any?
+    private var escKeyMonitor: Any?
+    private var outsideClickMonitor: Any?
+
+    private let panelWidth: CGFloat = 440
+    private let panelHeight: CGFloat = 260
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupNotchPanel()
-        setupEventMonitor()
+        setupEventMonitors()
     }
 
     private func setupNotchPanel() {
         guard let screen = NSScreen.main else { return }
         screenManager.update(screen: screen)
 
-        let initialWidth: CGFloat = 420
-        let initialHeight: CGFloat = 240
-        let x = screen.frame.midX - initialWidth / 2
-        let y = screen.frame.maxY - initialHeight
+        // Panel tam olarak ekranın üst kenarına yaslanır (y = maxY - panelHeight)
+        let x = screen.frame.midX - panelWidth / 2
+        let y = screen.frame.maxY - panelHeight
 
-        let contentRect = NSRect(x: x, y: y, width: initialWidth, height: initialHeight)
+        let contentRect = NSRect(x: x, y: y, width: panelWidth, height: panelHeight)
         let panel = NotchPanel(contentRect: contentRect)
 
         let rootView = NotchContainerView(viewModel: viewModel, screenManager: screenManager)
-        let hostingView = NSHostingView(rootView: rootView)
+        let hostingView = PassthroughHostingView(rootView: rootView)
         hostingView.frame = NSRect(origin: .zero, size: contentRect.size)
         hostingView.autoresizingMask = [.width, .height]
+
+        // Yalnızca aktif çentik sınırlarında fare olaylarını kabul et, boş alanları arkaya geçir
+        hostingView.activeBoundsProvider = { [weak self, weak panel] in
+            guard let self = self, let panel = panel else { return .zero }
+            let width = self.viewModel.currentWidth(
+                hasNotch: self.screenManager.hasNotch,
+                notchWidth: self.screenManager.notchWidth
+            )
+            let height = self.viewModel.currentHeight(
+                hasNotch: self.screenManager.hasNotch,
+                notchHeight: self.screenManager.notchHeight
+            )
+            let pSize = panel.frame.size
+            let originX = (pSize.width - width) / 2
+            let originY = pSize.height - height
+            return NSRect(x: originX, y: originY, width: width, height: height)
+        }
 
         panel.contentView = hostingView
         panel.orderFrontRegardless()
@@ -51,14 +86,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func repositionPanel() {
         guard let panel = notchPanel, let screen = NSScreen.main else { return }
         screenManager.update(screen: screen)
-        let x = screen.frame.midX - panel.frame.width / 2
-        let y = screen.frame.maxY - panel.frame.height
-        panel.setFrameOrigin(NSPoint(x: x, y: y))
+        let x = screen.frame.midX - panelWidth / 2
+        let y = screen.frame.maxY - panelHeight
+        panel.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
     }
 
-    private func setupEventMonitor() {
+    private func setupEventMonitors() {
         // Esc tuşuna basıldığında adayı kapat
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        escKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 { // 53 = Esc
                 Task { @MainActor in
                     self?.viewModel.collapse()
@@ -66,10 +101,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return event
         }
+
+        // Açık durumdayken panel dışına tıklandığında adayı kapat
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self, self.viewModel.isExpanded else { return }
+                self.viewModel.collapse()
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        if let monitor = eventMonitor {
+        if let monitor = escKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+        if let monitor = outsideClickMonitor {
             NSEvent.removeMonitor(monitor)
         }
     }

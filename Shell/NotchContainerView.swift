@@ -6,15 +6,32 @@ struct NotchContainerView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject var screenManager: ScreenManager
     
+    private var currentWidth: CGFloat {
+        viewModel.currentWidth(
+            hasNotch: screenManager.hasNotch,
+            notchWidth: screenManager.notchWidth
+        )
+    }
+    
+    private var currentHeight: CGFloat {
+        viewModel.currentHeight(
+            hasNotch: screenManager.hasNotch,
+            notchHeight: screenManager.notchHeight
+        )
+    }
+    
     var body: some View {
+        VStack(spacing: 0) {
+            islandBody
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .ignoresSafeArea()
+    }
+    
+    private var islandBody: some View {
         ZStack(alignment: .top) {
             // Arka Cam Gövde (Liquid Frosted Glass)
-            RoundedRectangle(cornerRadius: viewModel.isExpanded ? 28 : (screenManager.hasNotch ? 14 : 20), style: .continuous)
-                .fill(Color(red: 7/255, green: 9/255, blue: 14/255).opacity(0.92))
-                .overlay(
-                    RoundedRectangle(cornerRadius: viewModel.isExpanded ? 28 : (screenManager.hasNotch ? 14 : 20), style: .continuous)
-                        .stroke(Color(red: 30/255, green: 41/255, blue: 59/255), lineWidth: 1.5)
-                )
+            islandBackground
             
             // İçerik Katmanı
             if viewModel.isExpanded {
@@ -25,39 +42,86 @@ struct NotchContainerView: View {
                     .transition(.opacity)
             }
         }
-        .frame(
-            width: viewModel.isExpanded ? viewModel.expandedWidth : (screenManager.hasNotch ? max(screenManager.notchWidth, 200) : 180),
-            height: viewModel.isExpanded ? viewModel.expandedHeight : (screenManager.hasNotch ? screenManager.notchHeight : 34)
-        )
+        .frame(width: currentWidth, height: currentHeight)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if !viewModel.isExpanded {
+                viewModel.expand()
+            }
+        }
         .onHover { hovering in
             viewModel.onHoverChanged(hovering)
         }
     }
     
+    @ViewBuilder
+    private var islandBackground: some View {
+        if screenManager.hasNotch {
+            UnevenRoundedRectangle(
+                topLeadingRadius: 0,
+                bottomLeadingRadius: viewModel.isExpanded ? 24 : 12,
+                bottomTrailingRadius: viewModel.isExpanded ? 24 : 12,
+                topTrailingRadius: 0,
+                style: .continuous
+            )
+            .fill(Color(red: 7/255, green: 9/255, blue: 14/255).opacity(0.95))
+            .overlay(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 0,
+                    bottomLeadingRadius: viewModel.isExpanded ? 24 : 12,
+                    bottomTrailingRadius: viewModel.isExpanded ? 24 : 12,
+                    topTrailingRadius: 0,
+                    style: .continuous
+                )
+                .stroke(Color(red: 30/255, green: 41/255, blue: 59/255), lineWidth: 1.5)
+            )
+        } else {
+            RoundedRectangle(cornerRadius: viewModel.isExpanded ? 24 : 16, style: .continuous)
+                .fill(Color(red: 7/255, green: 9/255, blue: 14/255).opacity(0.95))
+                .overlay(
+                    RoundedRectangle(cornerRadius: viewModel.isExpanded ? 24 : 16, style: .continuous)
+                        .stroke(Color(red: 30/255, green: 41/255, blue: 59/255), lineWidth: 1.5)
+                )
+        }
+    }
+    
     // MARK: - Kapalı Durum Görünümü
     private var collapsedContent: some View {
-        HStack(spacing: 8) {
+        VStack(spacing: 0) {
             if !screenManager.hasNotch {
                 // Hap Modu: Çentiksiz Mac'lerde merkezde hafif parıltı
-                Circle()
-                    .fill(Color(red: 0/255, green: 102/255, blue: 255/255))
-                    .frame(width: 6, height: 6)
-                
-                Text("Çentik")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.85))
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color(red: 0/255, green: 102/255, blue: 255/255))
+                        .frame(width: 6, height: 6)
+                    
+                    Text("Çentik")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                .frame(maxHeight: .infinity)
+                .padding(.horizontal, 12)
             } else {
+                // Çentikli Mac: Çentik altında şık bekleme çizgisi
                 Spacer()
-                // Çentikli Mac: Çentik altında bekleme çizgisi
+                
                 Capsule()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 32, height: 3)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0/255, green: 102/255, blue: 255/255),
+                                Color(red: 56/255, green: 189/255, blue: 248/255)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: 38, height: 2.5)
                     .padding(.bottom, 2)
-                Spacer()
+                    .shadow(color: Color(red: 0/255, green: 102/255, blue: 255/255).opacity(0.5), radius: 3)
             }
         }
-        .frame(maxHeight: .infinity)
-        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Genişletilmiş Ada Paneli
