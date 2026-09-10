@@ -40,6 +40,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupEventMonitors()
     }
 
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
     private func setupNotchPanel() {
         guard let screen = NSScreen.main else { return }
         screenManager.update(screen: screen)
