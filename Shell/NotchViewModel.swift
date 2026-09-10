@@ -15,7 +15,8 @@ final class NotchViewModel: ObservableObject {
         if isExpanded {
             return expandedWidth
         }
-        return hasNotch ? max(notchWidth, 185) + 16 : 170
+        // Donanım çentiği + 2x omuz kavis payı (6px sol + 6px sağ)
+        return hasNotch ? max(notchWidth, 185) + 20 : 170
     }
     
     func currentHeight(hasNotch: Bool, notchHeight: CGFloat) -> CGFloat {
@@ -23,6 +24,11 @@ final class NotchViewModel: ObservableObject {
             return expandedHeight
         }
         return hasNotch ? notchHeight + 6 : 32
+    }
+
+    /// Dokunsal geri bildirim (Apple Haptic Feedback)
+    func performHaptic(_ pattern: NSHapticFeedbackManager.FeedbackPattern = .alignment) {
+        NSHapticFeedbackManager.defaultPerformer.perform(pattern, performanceTime: .default)
     }
     
     private var hoverTask: Task<Void, Never>?
@@ -63,6 +69,7 @@ final class NotchViewModel: ObservableObject {
     func expand() {
         hoverTask?.cancel()
         closeTask?.cancel()
+        performHaptic(.alignment)
         withAnimation(.spring(response: 0.34, dampingFraction: 0.76)) {
             isExpanded = true
         }
@@ -72,6 +79,7 @@ final class NotchViewModel: ObservableObject {
     func collapse() {
         hoverTask?.cancel()
         closeTask?.cancel()
+        performHaptic(.levelChange)
         withAnimation(.spring(response: 0.26, dampingFraction: 0.82)) {
             isExpanded = false
         }

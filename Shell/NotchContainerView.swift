@@ -57,21 +57,15 @@ struct NotchContainerView: View {
     @ViewBuilder
     private var islandBackground: some View {
         if screenManager.hasNotch {
-            UnevenRoundedRectangle(
-                topLeadingRadius: 0,
-                bottomLeadingRadius: viewModel.isExpanded ? 24 : 12,
-                bottomTrailingRadius: viewModel.isExpanded ? 24 : 12,
-                topTrailingRadius: 0,
-                style: .continuous
+            NotchShape(
+                topCornerRadius: viewModel.isExpanded ? 10 : 6,
+                bottomCornerRadius: viewModel.isExpanded ? 24 : 14
             )
             .fill(Color(red: 7/255, green: 9/255, blue: 14/255).opacity(0.95))
             .overlay(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 0,
-                    bottomLeadingRadius: viewModel.isExpanded ? 24 : 12,
-                    bottomTrailingRadius: viewModel.isExpanded ? 24 : 12,
-                    topTrailingRadius: 0,
-                    style: .continuous
+                NotchShape(
+                    topCornerRadius: viewModel.isExpanded ? 10 : 6,
+                    bottomCornerRadius: viewModel.isExpanded ? 24 : 14
                 )
                 .stroke(Color(red: 30/255, green: 41/255, blue: 59/255), lineWidth: 1.5)
             )

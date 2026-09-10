@@ -2,8 +2,13 @@ import AppKit
 import SwiftUI
 
 /// Şeffaf alanlarda tıklamaların arkadaki pencerelere/masaüstüne geçmesini sağlayan özel hosting view.
+/// acceptsFirstMouse: Odak dışı panelde ilk tıklamada anında aksiyon alınmasını sağlar.
 final class PassthroughHostingView<Content: View>: NSHostingView<Content> {
     var activeBoundsProvider: (() -> NSRect)?
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        true
+    }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         guard let targetRect = activeBoundsProvider?() else {
@@ -28,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let panelWidth: CGFloat = 440
     private let panelHeight: CGFloat = 260
+    private let retinaBleedOffset: CGFloat = 1.0 // Retina çerçeve içine 1px gömülme payı (sıfır saç teli boşluk)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupNotchPanel()
@@ -38,9 +44,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let screen = NSScreen.main else { return }
         screenManager.update(screen: screen)
 
-        // Panel tam olarak ekranın üst kenarına yaslanır (y = maxY - panelHeight)
+        // Panel tam olarak ekranın üst kenarına yaslanır (y = maxY - panelHeight + bleed)
         let x = screen.frame.midX - panelWidth / 2
-        let y = screen.frame.maxY - panelHeight
+        let y = screen.frame.maxY - panelHeight + retinaBleedOffset
 
         let contentRect = NSRect(x: x, y: y, width: panelWidth, height: panelHeight)
         let panel = NotchPanel(contentRect: contentRect)
@@ -87,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let panel = notchPanel, let screen = NSScreen.main else { return }
         screenManager.update(screen: screen)
         let x = screen.frame.midX - panelWidth / 2
-        let y = screen.frame.maxY - panelHeight
+        let y = screen.frame.maxY - panelHeight + retinaBleedOffset
         panel.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
     }
 
