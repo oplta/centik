@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import SwiftUI
 
 /// Şeffaf alanlarda tıklamaların arkadaki pencerelere/masaüstüne geçmesini sağlayan özel hosting view.
@@ -33,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let themes = ThemeManager()
     private let hotkeys = HotkeyManager()
     private let updater = UpdateManager()
+    private let dragMonitor = DragMonitor()
     private var outsideClickMonitor: Any?
 
     private let panelWidth: CGFloat = 440
@@ -47,11 +49,57 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clipboard: { [weak self] in Task { @MainActor in self?.openClipboard() } }
         )
         updater.start()
+        setupDragMonitor()
+        ensureDragMonitoring()
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.ensureDragMonitoring() }
+        }
     }
 
     /// ⌥V: pano görünümü v0.4'e kadar paneli açar.
     private func openClipboard() {
         viewModel.expand()
+    }
+
+    // MARK: - Sürükleme izleme (Erişilebilirlik izni gerekir)
+
+    private func setupDragMonitor() {
+        dragMonitor.regionProvider = { [weak self] in
+            self?.notchRegion() ?? .zero
+        }
+        dragMonitor.onEnterRegion = { [weak self] in
+            self?.viewModel.expand()
+        }
+        dragMonitor.onExitRegion = { [weak self] in
+            self?.viewModel.onHoverChanged(false)
+        }
+    }
+
+    /// İzin yoksa sistem penceresini bir kez gösterir; ret denenirse
+    /// uygulama her öne çıktığında sessizce yeniden dener.
+    private func ensureDragMonitoring() {
+        // Not: kAXTrustedCheckOptionPrompt extern global'i Swift 6'da paylaşılan
+        // durum sayılır; değeri sabit string olarak verilir (resmi anahtar adı).
+        let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
+        guard AXIsProcessTrustedWithOptions(options) else { return }
+        dragMonitor.start()
+    }
+
+    /// Sürükleme bölgesi: ekran üst-orta (panel alanıyla aynı).
+    private func notchRegion() -> CGRect {
+        guard let screen = NSScreen.main else { return .zero }
+        let width: CGFloat = 440
+        let height: CGFloat = 260
+        return CGRect(
+            x: screen.frame.midX - width / 2,
+            y: screen.frame.maxY - height,
+            width: width,
+            height: height
+        )
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

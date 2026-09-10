@@ -25,7 +25,7 @@
 
 ## v0.2 — Raf gerçekten kullanışlı `[ ]`
 
-- [ ] **DragMonitor** (`Core/`): global fare + drag-pasteboard ile sürükleme bölgeye girince aç/çıkınca kapat. Kabul: Finder'dan sürüklerken ada hedef büyümeden önce açılır. Not: Erişilebilirlik izni ister → onboarding metni.
+- [x] **DragMonitor** (`Core/DragMonitor`): global fare + drag-pasteboard ile sürükleme bölgeye girince aç/çıkınca kapat. Kabul: Finder'dan sürüklerken ada hedef büyümeden önce açılır. Not: Erişilebilirlik izni ister → ilk açılışta sistem penceresi çıkar.
 - [ ] **Çok tipli drop**: dosya + link + metin merdiveni (Boring ShelfDropService sırası). Kabul: link/metin de rafta durur.
 - [ ] **Raf ızgarası**: thumbnail kartlar (QLThumbnail), pin rozeti, sağ-tık (Aç/AirDrop/Sil). Kabul: 5 dosya görsel kart olarak durur.
 - [ ] **Raftan dışarı sürükleme** + QuickLook (Boşluk). Kabul: raftan Finder'a dosya taşınır.
