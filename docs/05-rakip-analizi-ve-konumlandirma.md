@@ -56,3 +56,27 @@ Bu belge, macOS çentik ve dinamik ada ekosistemindeki 10 ana rakibin detaylı a
 
 * **Açık Çekirdek (Open Core) Kozu:** Çekirdeğin açık olması GitHub'da hızla yıldız toplamasını ve yazılımcı topluluğunun güvenini kazanmasını sağlar.
 * **Türkçe-First Stratejisi:** Türkiye pazarında güçlü bir kullanıcı ve geri bildirim kitlesi oluşturulup Twitter/X, Reddit r/macapps ve Product Hunt ile küresele açılma.
+
+---
+
+## 4. Boring Notch Kod Analizi Bulguları (11 Eyl 2026, klon: /tmp)
+
+**Yasal sınır:** Boring Notch **GPL-3.0**'dır. Kodu MIT çekirdeğe kopyalamak lisansı kirletir.
+Aşağıdakiler fikir/pattern düzeyinde yeniden yazılacak şeylerdir, kod değil.
+
+### Alınacak UI/UX pattern'leri
+1. **DragDetector (observers/DragDetector.swift):** Sürüklemeyi SwiftUI hover'ına değil,
+   global fare + `NSPasteboard(name: .drag)` değişimine + ekran-bölge testine bağlar.
+   Bizim drop-açılma bug'ımızın doğru çözümü budur (bedeli: Erişilebilirlik izni).
+2. **ShelfDropService tip merdiveni:** fileURL → url (dosya/link ayrımı) → metin → ham veri
+   (geçici dosya). Bizde şimdi yalnız .fileURL var; link/metin sonraki adım.
+3. **Raf kartı anatomisi:** thumbnail + pin + sağ-tık (Aç/AirDrop/Sil) + çift-tık aç +
+   raftan dışarı sürükleme + QuickLook (Boşluk) + çoklu seçim (⇧/⌘). Bizim sayaç-karttan sonraki hedef.
+4. **Medya mimarisi:** uygulama-başına controller + `MediaControllerProtocol`
+   (play/pause/seek/shuffle/repeat/volume) + `MRMediaRemoteSendCommand` ile transport.
+   AppleEvent izni istemeden kontrol — bizim oynat/duraklat yolumuz budur.
+5. **Boş durum (empty state) dili:** ikon + tek cümle ("Drop files here" tarzı). Bizim boş karta uyar.
+
+### Bilerek alınmayacaklar
+- Şarkı sözü için web'e çıkma (local-first ihlali), Lottie bağımlılığı, kamera aynası,
+  ayarlar labirenti, `.shared` singleton çöplüğü (bizde init-enjeksiyon sürer).

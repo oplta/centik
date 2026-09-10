@@ -27,7 +27,7 @@ Bu belge, Çentik'in v1 MVP sürümünde yer alacak 6 temel özelliği ve bunlar
 * **Açılma & Kapanma:**
   * Fare çentik bölgesine girdiğinde 0.18 saniye gecikmeyle (yanlışlıkla açılmayı önleyen sönümleme, bkz. `06-tasarim-dili` §4.2) aşağıya doğru 60fps akıcı yay animasyonuyla genişler.
   * Fare adadan çıktığında 0.35 saniye sonra kapanır.
-  * `Esc` tuşuna basıldığında anında kapanır.
+  * Panel dışına tıklanınca 0.35s sönümlemeyle kapanır; başlıktaki güç düğmesi uygulamayı kapatır.
   * Tam ekran (Full Screen) uygulamalara geçildiğinde çentik otomatik olarak gizlenir.
   * Ekran kaydı ve ekran görüntüsü alırken ada görünmez yapılır (`sharingType = .none`).
 
@@ -70,16 +70,35 @@ Bu belge, Çentik'in v1 MVP sürümünde yer alacak 6 temel özelliği ve bunlar
 
 ---
 
-## 3. Gelecek Sürümler (v2 Yol Haritası)
+## 3. Yol Haritası (Boring Notch kod analizinden beslendi, 11 Eyl 2026)
 
-Aşağıdaki özellikler v1 MVP tamamlanıp kullanıcı geri bildirimleri toplandıktan sonra eklenecektir:
-1. **Drop-to-Convert (Dosya Dönüştürücü):**
-   * HEIC → JPG / PNG dönüştürme
-   * PNG görsel sıkıştırma
-   * Çoklu görselleri tek tıkla PDF yapma
-2. **On-Device Offline Dikte:**
-   * Kısayola basılı tutarak konuşulanı imlecin olduğu yere yazma (Apple Speech / Whisper).
-3. **Gelişmiş Pano OCR:**
-   * Ekran görüntüsü içindeki metinleri Apple Vision Framework ile yerel olarak arayabilme.
-4. **Mini Sistem Monitörü:**
-   * Çentikte sadece istendiğinde görünen CPU, RAM ve pil sıcaklığı göstergesi.
+Boring Notch (GPL-3.0, 120 Swift dosyası) klonlanıp incelendi. **Yasal sınır:**
+kod kopyalanamaz (GPL, MIT çekirdeği kirletir); yalnızca fikir/pattern yeniden yazılır.
+Detay: `docs/05 §4`.
+
+### v0.2 — Raf gerçekten kullanışlı (sıradaki)
+- [ ] **DragMonitor:** global fare + drag-pasteboard ile sürükleme çentik bölgesine girince aç, çıkınca kapat (Boring `DragDetector` patterni; Erişilebilirlik izni ister).
+- [ ] **Çok tipli drop:** dosya + link + metin merdiveni (Boring `ShelfDropService` sırası); söz verilen dosyalar (promise) dahil.
+- [ ] **Raf ızgarası:** küçük resimli kartlar (QLThumbnail), pin rozeti, sağ-tık menü (Aç / AirDrop / Sil).
+- [ ] **Raftan sürükle-bırak:** dosyayı raftan Finder/Slack'e geri taşıma + QuickLook (Boşluk) önizleme.
+- [ ] **Kalıcılık:** bookmark kaydet/yükle; açılışta geçersizleri temizle.
+
+### v0.3 — Medya gerçek kontrol
+- [ ] **Transport:** `MRMediaRemoteSendCommand` ile oynat/duraklat/sonraki/önceki/±15sn (AppleEvent izni gerekmez; Boring `MediaControllerProtocol` arayüzü örnek alınır).
+- [ ] **İlerleme çubuğu:** süre/geçen + seek (yalnızca açık + çalarken tick; idle-%0 ilkesi korunur).
+- [ ] **Uygulama ikonu + kapak:** hangi uygulamadan çaldığı rozeti.
+
+### v0.4 — v1'i kapat (pano + HUD + takvim)
+- [ ] Mini Pano 30 + `⌥V` (şifre filtresiyle; OCR yok).
+- [ ] Sistem HUD (ses/parlaklık/klavye ışığı).
+- [ ] Takvim çipi (tek-tık katılım; çağrı kontrolü yok).
+
+### v2 — Pro ($19)
+1. **Drop-to-Convert:** HEIC→JPG/PNG, PNG sıkıştırma, çoklu görsel→PDF.
+2. **On-Device Offline Dikte:** basılı tut-konuş (Apple Speech / Whisper).
+3. **Pano OCR:** ekran görüntüsünde Vision ile yerel metin arama.
+4. **Mini Sistem Monitörü:** istenince CPU/RAM/pil (sürekli poll yok).
+
+### Bilerek alınMAyanlar (Boring'dan ders)
+- Şarkı sözü web araması (ağ/telemetri ilkesi), Lottie bağımlılığı, kamera aynası (izin yükü),
+  her-yerde singleton (`.shared` çöplüğü yerine init-enjeksiyon bizde kalır).

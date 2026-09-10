@@ -21,7 +21,8 @@ let package = Package(
             ],
             sources: [
                 "App",
-                "Shell"
+                "Shell",
+                "Features"
             ]
         )
     ]

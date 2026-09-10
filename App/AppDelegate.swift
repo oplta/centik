@@ -28,7 +28,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var notchPanel: NotchPanel?
     private let screenManager = ScreenManager()
     private let viewModel = NotchViewModel()
-    private var escKeyMonitor: Any?
+    private let shelf = FileShelfManager()
+    private let nowPlaying = NowPlayingManager()
+    private let themes = ThemeManager()
     private var outsideClickMonitor: Any?
 
     private let panelWidth: CGFloat = 440
@@ -45,7 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupNotchPanel() {
-        guard let screen = NSScreen.main else { return }
+        guard let screen = NSScreen.notchScreen else { return }
         screenManager.update(screen: screen)
 
         // Panel tam olarak ekranın üst kenarına yaslanır (y = maxY - panelHeight + bleed)
@@ -55,7 +57,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let contentRect = NSRect(x: x, y: y, width: panelWidth, height: panelHeight)
         let panel = NotchPanel(contentRect: contentRect)
 
-        let rootView = NotchContainerView(viewModel: viewModel, screenManager: screenManager)
+        let rootView = NotchContainerView(
+            viewModel: viewModel,
+            screenManager: screenManager,
+            shelf: shelf,
+            nowPlaying: nowPlaying,
+            themes: themes
+        )
         let hostingView = PassthroughHostingView(rootView: rootView)
         hostingView.frame = NSRect(origin: .zero, size: contentRect.size)
         hostingView.autoresizingMask = [.width, .height]
@@ -94,7 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func repositionPanel() {
-        guard let panel = notchPanel, let screen = NSScreen.main else { return }
+        guard let panel = notchPanel, let screen = NSScreen.notchScreen else { return }
         screenManager.update(screen: screen)
         let x = screen.frame.midX - panelWidth / 2
         let y = screen.frame.maxY - panelHeight + retinaBleedOffset
@@ -102,16 +110,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupEventMonitors() {
-        // Esc tuşuna basıldığında adayı kapat
-        escKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.keyCode == 53 { // 53 = Esc
-                Task { @MainActor in
-                    self?.viewModel.collapse()
-                }
-            }
-            return event
-        }
-
         // Açık durumdayken panel dışına tıklandığında adayı kapat
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             Task { @MainActor in
@@ -122,9 +120,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        if let monitor = escKeyMonitor {
-            NSEvent.removeMonitor(monitor)
-        }
         if let monitor = outsideClickMonitor {
             NSEvent.removeMonitor(monitor)
         }

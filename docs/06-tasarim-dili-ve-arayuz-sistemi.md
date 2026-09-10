@@ -72,7 +72,7 @@ Arayüz asla kullanıcının dikkatini çalacak karmaşık grafikler veya uzun m
 ### 4.2. Zamanlama ve Sönümleme Kuralları
 * **Hover Gecikmesi (Damping Delay):** Fare çentiğin üzerine geldiğinde ada hemen fırlamaz; istem dışı açılmaları önlemek için **0.18 saniye** sönümleme süresi bekler.
 * **Kapanma Gecikmesi:** Fare adadan ayrıldığında **0.35 saniye** sonra yumuşakça kapanır.
-* **Esc Kısayolu:** `Esc` tuşuna basıldığında bekleme olmaksızın anında (0.15s) toparlanır.
+* **Kapanma:** Panel dışına tıklanınca 0.35s sönümlemeyle kapanır. Klavye kısayolu v1'de yok; başlıktaki güç düğmesi uygulamayı kapatır.
 
 ---
 

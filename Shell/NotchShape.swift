@@ -3,14 +3,11 @@ import SwiftUI
 /// Apple donanım çentiği ve menü bar omuz kavislerini (shoulders) birebir üreten dinamik şekil.
 /// Kaynak referansı: DynamicNotchKit & boring.notch bezier eğri modeli.
 struct NotchShape: Shape {
-    var topCornerRadius: CGFloat
-    var bottomCornerRadius: CGFloat
+    var topCornerRadius: CGFloat = 6
+    var bottomCornerRadius: CGFloat = 14
 
-    init(topCornerRadius: CGFloat = 6, bottomCornerRadius: CGFloat = 14) {
-        self.topCornerRadius = topCornerRadius
-        self.bottomCornerRadius = bottomCornerRadius
-    }
-
+    // Not: @Animatable makrosu bu toolchain'de plugin eksikliğinden derlenmiyor
+    // (doğrulandı: SwiftUIMacros not found). Manuel eşdeğeri aynı sentezi üretir.
     var animatableData: AnimatablePair<CGFloat, CGFloat> {
         get { AnimatablePair(topCornerRadius, bottomCornerRadius) }
         set {

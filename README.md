@@ -36,14 +36,14 @@ Apple, MacBook ekranlarına çentiği yerleştirdi ancak bu alan yıllarca siyah
 
 ---
 
-## 📦 v1 MVP Özellik Kapsamı
+## 📦 v1 Durumu (dürüst tablo — detay `docs/02 §3`)
 
-* [x] **Ada İskeleti & Hap Modu:** Çentiği kusursuz saran, hover (0.2s) ve `⌥Space` ile açılan, `Esc` ile anında kapanan sıvı animasyonlu cam panel.
-* [x] **Dosya Rafı (FileShelf):** Sürükle-bırak dosya tutma alanı, kopyalama/taşıma desteği, tek tıkla AirDrop.
-* [x] **Now Playing & Medya:** Apple Music & Spotify entegrasyonu, albüm kapağı, oynat/duraklat ve 15sn atlama.
-* [x] **Sistem HUD:** Ses, ekran ve klavye parlaklığı seviyelerinin çentik içinde modern gösterimi.
-* [x] **Mini Pano (Clipboard 30):** Son 30 pano kaydı, anlık filtreleme ve yapıştırma (şifreler otomatik filtrelenir).
-* [x] **Takvim / Toplantı Çipi:** Sıradaki görüşme rozeti ve doğrudan toplantı linkine yönlendirme.
+* [x] **Ada İskeleti & Hap Modu:** hover (0.18s) ile açılan, dışarı tıkla kapanan cam panel.
+* [~] **Dosya Rafı:** drop ile tutuyor; liste/pin/AirDrop sürüklemesi v0.2'de.
+* [~] **Now Playing:** sistem genelini salt-okunur gösteriyor (MediaRemote); transport v0.3'te.
+* [ ] **Sistem HUD:** ses/parlaklık/klavye ışığı (v0.4).
+* [ ] **Mini Pano (30):** arama + yapıştırma, şifre filtresi (v0.4).
+* [ ] **Takvim Çipi:** tek-tık katılım (v0.4).
 
 ---
 

@@ -1,11 +1,13 @@
+import AppKit
 import SwiftUI
 
 /// Çentik ada durumu, animasyon zamanlaması ve hover sönümleme yöneticisi.
 /// Bkz. docs/06-tasarim-dili-ve-arayuz-sistemi.md §4.
 @MainActor
-final class NotchViewModel: ObservableObject {
-    @Published var isExpanded: Bool = false
-    @Published var isHovered: Bool = false
+@Observable
+final class NotchViewModel {
+    var isExpanded: Bool = false
+    var isHovered: Bool = false
     
     // Boyut kuralları
     let expandedWidth: CGFloat = 400
@@ -92,5 +94,11 @@ final class NotchViewModel: ObservableObject {
         } else {
             expand()
         }
+    }
+
+    /// Uygulamayı tamamen kapatır (başlıktaki güç düğmesi).
+    func quit() {
+        performHaptic(.levelChange)
+        NSApplication.shared.terminate(nil)
     }
 }
