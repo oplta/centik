@@ -31,6 +31,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let shelf = FileShelfManager()
     private let nowPlaying = NowPlayingManager()
     private let themes = ThemeManager()
+    private let hotkeys = HotkeyManager()
+    private let updater = UpdateManager()
     private var outsideClickMonitor: Any?
 
     private let panelWidth: CGFloat = 440
@@ -40,6 +42,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupNotchPanel()
         setupEventMonitors()
+        hotkeys.register(
+            toggle: { [weak self] in Task { @MainActor in self?.viewModel.toggle() } },
+            clipboard: { [weak self] in Task { @MainActor in self?.openClipboard() } }
+        )
+        updater.start()
+    }
+
+    /// ⌥V: pano görünümü v0.4'e kadar paneli açar.
+    private func openClipboard() {
+        viewModel.expand()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -120,6 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        hotkeys.unregister()
         if let monitor = outsideClickMonitor {
             NSEvent.removeMonitor(monitor)
         }

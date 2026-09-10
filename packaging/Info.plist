@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>app.centik.mac</string>
+    <key>CFBundleName</key>
+    <string>Centik</string>
+    <key>CFBundleDisplayName</key>
+    <string>Çentik</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@APP_VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@BUILD_NUMBER@</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>Centik</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Çentik Contributors (MIT)</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <!-- Sparkle: feed URL sabit; public key paketleme sırasında env'den yazılır -->
+    <key>SUFeedURL</key>
+    <string>https://oplta.github.io/centik/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>@SPARKLE_PUBLIC_KEY@</string>
+</dict>
+</plist>

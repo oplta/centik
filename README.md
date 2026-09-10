@@ -57,6 +57,8 @@ Projenin tüm detaylı mimari, strateji ve tasarım belgeleri `docs/` klasörün
 * 📄 [04 – Marka ve Tasarım Rehberi](docs/04-marka-ve-tasarim-rehberi.md): Renk paleti, `centik-logo.svg`, tipografi ve landing page metinleri.
 * 📄 [05 – Rakip Analizi ve Pazar Stratejisi](docs/05-rakip-analizi-ve-konumlandirma.md): Notchy, NotchNook, Boring Notch kıyaslaması ve pazar boşluğu.
 * 📄 [06 – Tasarım Dili ve Arayüz Sistemi](docs/06-tasarim-dili-ve-arayuz-sistemi.md): Malzeme hiyerarşisi, yay animasyonu fiziği, bileşen anatomisi ve 8pt ızgara sistemi.
+* 📄 [07 – Yol Haritası ve Görevler](docs/07-yol-haritasi-ve-gorevler.md): v-numarası ilkesi (sembolik, gerçek takip git tag), faz faz görevler ve kabul kriterleri.
+* 📄 [08 – Güncelleme Altyapısı](docs/08-guncelleme-altyapisi.md): Sparkle appcast akışı, git tag'den sürüm, release pipeline ve sana kalan 4 iş.
 
 ---
 

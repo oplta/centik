@@ -1,0 +1,59 @@
+name: Release
+
+# Tag itince çalışır:  git tag v0.2 && git push origin v0.2
+# v-numaraları semboliktir; gerçek sürüm = tag + commit hash (docs/07).
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - name: Xcode seç
+        run: sudo xcode-select -s /Applications/Xcode_26.app/Contents/Developer || true
+
+      - name: Paketle
+        env:
+          SPARKLE_PUBLIC_KEY: ${{ secrets.SPARKLE_PUBLIC_KEY }}
+          CODESIGN_IDENTITY: ${{ secrets.CODESIGN_IDENTITY }}
+        run: ./scripts/package-app.sh
+
+      # Sertifika yoksa imza ad-hoc kalır; aşağıdaki adımlar secret'lar
+      # tanımlanmadan pas geçilir (dağıtım öncesi docs/08'deki listeye bak).
+      - name: Sertifikayı içe aktar
+        if: ${{ secrets.APPLE_CERT_P12 != '' }}
+        env:
+          CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: |
+          echo "$CERT_P12" | base64 -d > /tmp/cert.p12
+          security import /tmp/cert.p12 -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          rm /tmp/cert.p12
+
+      - name: Noterize et
+        if: ${{ secrets.APPLE_ID != '' }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          ditto -c -k --keepParent dist/Centik.app dist/Centik-notarize.zip
+          xcrun notarytool submit dist/Centik-notarize.zip \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple dist/Centik.app
+
+      - name: Release oluştur
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Centik-*.zip
+          generate_release_notes: true

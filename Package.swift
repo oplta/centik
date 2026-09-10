@@ -9,20 +9,29 @@ let package = Package(
     products: [
         .executable(name: "Centik", targets: ["Centik"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0")
+    ],
     targets: [
         .executableTarget(
             name: "Centik",
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             path: ".",
             exclude: [
                 "docs",
                 "assets",
                 "LICENSE",
-                "README.md"
+                "README.md",
+                "packaging",
+                "scripts"
             ],
             sources: [
                 "App",
                 "Shell",
-                "Features"
+                "Features",
+                "Core"
             ]
         )
     ]

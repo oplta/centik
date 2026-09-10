@@ -18,6 +18,23 @@ struct FileItem: Identifiable, Sendable {
         self.isPinned = isPinned
     }
 
+    /// Kalıcılıktan yükleme: bayat/çözümlenemeyen yer imleri elenir.
+    /// Bayat bookmark throw eder → öğe sessizce düşer (açılış temizliği).
+    init(bookmark: Data, isPinned: Bool) throws {
+        var stale = false
+        let url = try URL(
+            resolvingBookmarkData: bookmark,
+            options: .withSecurityScope,
+            relativeTo: nil,
+            bookmarkDataIsStale: &stale
+        )
+        guard !stale else { throw CocoaError(.fileReadInvalidFileName) }
+        self.id = UUID()
+        self.bookmark = bookmark
+        self.name = url.lastPathComponent
+        self.isPinned = isPinned
+    }
+
     /// Bookmark'ı çözümler; dosya taşınmış/silinmişse nil döner.
     func resolveURL() -> URL? {
         var stale = false
@@ -39,6 +56,30 @@ final class FileShelfManager {
 
     private(set) var items: [FileItem] = []
 
+    private static let storeKey = "centik.shelf.v1"
+
+    private struct StoredItem: Codable {
+        var bookmark: Data
+        var pinned: Bool
+    }
+
+    init() {
+        load()
+    }
+
+    /// Yeniden başlatmalarda rafı geri yükler; geçersizler elenir.
+    private func load() {
+        guard let data = UserDefaults.standard.data(forKey: Self.storeKey),
+              let stored = try? JSONDecoder().decode([StoredItem].self, from: data)
+        else { return }
+        items = stored.compactMap { try? FileItem(bookmark: $0.bookmark, isPinned: $0.pinned) }
+    }
+
+    private func save() {
+        let stored = items.map { StoredItem(bookmark: $0.bookmark, pinned: $0.isPinned) }
+        UserDefaults.standard.set(try? JSONEncoder().encode(stored), forKey: Self.storeKey)
+    }
+
     var subtitle: String {
         items.isEmpty ? "Bırak, dursun" : "\(items.count) dosya"
     }
@@ -55,19 +96,23 @@ final class FileShelfManager {
         }
         guard let item = try? FileItem(url: url) else { return }
         items.append(item)
+        save()
     }
 
     func remove(id: FileItem.ID) {
         items.removeAll { $0.id == id }
+        save()
     }
 
     func togglePin(id: FileItem.ID) {
         guard let index = items.firstIndex(where: { $0.id == id }) else { return }
         items[index].isPinned.toggle()
+        save()
     }
 
     func clearUnpinned() {
         items.removeAll { !$0.isPinned }
+        save()
     }
 
     private var unpinnedCount: Int { items.filter { !$0.isPinned }.count }
