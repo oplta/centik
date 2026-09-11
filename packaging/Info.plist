@@ -18,6 +18,9 @@
     <string>Centik</string>
     <key>LSUIElement</key>
     <true/>
+    <!-- Anlık tepki şart: App Nap zamanlayıcıları uyutur, ada donmuş görünür -->
+    <key>NSAppSleepDisabled</key>
+    <true/>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSHumanReadableCopyright</key>

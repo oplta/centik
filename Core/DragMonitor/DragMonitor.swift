@@ -10,6 +10,8 @@ import UniformTypeIdentifiers
 final class DragMonitor {
     /// Çentik bölgesi (ekran koordinatları). Fare buraya içerikle girince açılır.
     var regionProvider: (() -> CGRect)?
+    /// Bırakma bölgesi (daha geniş olabilir); verilmezse hover bölgesi kullanılır.
+    var dropRegionProvider: (() -> CGRect)?
     var onEnterRegion: (() -> Void)?
     var onExitRegion: (() -> Void)?
     var onHoverEnter: (() -> Void)?
@@ -25,6 +27,7 @@ final class DragMonitor {
     private var isDragging = false
     private var isContentDragging = false
     private var hasEnteredRegion = false
+    private var hasHoveredRegion = false
 
     private static let validTypes: [NSPasteboard.PasteboardType] = [
         .fileURL,
@@ -41,6 +44,7 @@ final class DragMonitor {
                 self.isDragging = true
                 self.isContentDragging = false
                 self.hasEnteredRegion = false
+                self.hasHoveredRegion = false
             }
         }
         mouseDraggedMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { [weak self] _ in
@@ -53,6 +57,7 @@ final class DragMonitor {
                 self.isDragging = false
                 self.isContentDragging = false
                 self.hasEnteredRegion = false
+                self.hasHoveredRegion = false
                 self.pasteboardChangeCount = -1
             }
         }
@@ -67,17 +72,25 @@ final class DragMonitor {
     private func handleMoved() {
         // Sürükleme anında drag mantığı söz sahibidir.
         guard !isDragging, let regionProvider else { return }
-        let inside = regionProvider().contains(NSEvent.mouseLocation)
-        if inside, !hasEnteredRegion {
-            hasEnteredRegion = true
+        let region = regionProvider()
+        if !Self.didLogHeartbeat {
+            Self.didLogHeartbeat = true
+            DebugLog.log("moved-ilk: region=\(NSStringFromRect(region))")
+        }
+        let inside = region.contains(NSEvent.mouseLocation)
+        if inside, !hasHoveredRegion {
+            hasHoveredRegion = true
             DebugLog.log("hover-enter region")
             onHoverEnter?()
-        } else if !inside, hasEnteredRegion {
-            hasEnteredRegion = false
+        } else if !inside, hasHoveredRegion {
+            hasHoveredRegion = false
             DebugLog.log("hover-exit region")
             onHoverExit?()
         }
     }
+
+    /// Süreç ömründe bir kez: monitörün yaşadığını kanıtlar.
+    private static var didLogHeartbeat = false
 
     func stop() {
         for monitor in [mouseDownMonitor, mouseDraggedMonitor, mouseUpMonitor, mouseMovedMonitor] {
@@ -90,6 +103,7 @@ final class DragMonitor {
         isDragging = false
         isContentDragging = false
         hasEnteredRegion = false
+        hasHoveredRegion = false
     }
 
     private func handleDragged() {
@@ -109,7 +123,9 @@ final class DragMonitor {
     }
 
     private func onEnterExitIfNeeded(point: CGPoint, region: CGRect) {
-        let inside = region.contains(point)
+        // Sürüklemede geniş bırakma bölgesi kullanılır.
+        let dropRegion = dropRegionProvider?() ?? region
+        let inside = dropRegion.contains(point)
         if inside, !hasEnteredRegion {
             hasEnteredRegion = true
             DebugLog.log("drag-enter region")

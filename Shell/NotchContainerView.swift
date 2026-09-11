@@ -89,7 +89,9 @@ struct NotchContainerView: View {
         .animation(reduceMotion ? nil : CentikTheme.magneticSpring, value: isDropTarget)
         .contentShape(Rectangle())
         .onTapGesture {
-            if !viewModel.isExpanded {
+            if viewModel.isExpanded {
+                viewModel.collapse()
+            } else {
                 viewModel.expand()
             }
         }

@@ -3,9 +3,9 @@ import Foundation
 
 /// Sistem genelinde çalan medyayı gösterir (Music, Spotify, tarayıcı, diğer uygulamalar).
 ///
-/// Yöntem: MediaRemote private framework'ü çalışma anında `dlopen` ile yüklenir,
-/// bağlantı anında bağımlılık yoktur. Olay akışı tamamen event-driven'dır
-/// (Darwin notify → bilgi çek); polling YOK.
+/// Yöntem: MediaRemote private framework'ü CFBundle ile yüklenir (Boring Notch
+/// ile aynı teknik), bağlantı anında bağımlılık yoktur. Olay akışı tamamen
+/// event-driven'dır (Darwin notify → bilgi çek); polling YOK.
 ///
 /// Not: private API App Store'a giremez. Çentik DMG/Homebrew dağıtıldığı için
 /// sorun değildir; olası bir App Store lite sürümünde bu dosya derlemeden çıkarılır.
@@ -27,7 +27,8 @@ final class NowPlayingManager {
 
     // Gözlem dışı + nonisolated(unsafe) gerekçesi: UI state'i değildir;
     // yalnızca @MainActor init içinde, obje kaçmadan yazılır.
-    @ObservationIgnored nonisolated(unsafe) private var handle: UnsafeMutableRawPointer?
+    // Bundle Boring Notch ile aynı yöntemle tutulur (CFBundleCreate).
+    @ObservationIgnored nonisolated(unsafe) private var mediaBundle: CFBundle?
     @ObservationIgnored nonisolated(unsafe) private var legacyObservers: [NSObjectProtocol] = []
 
     private typealias MRRegisterFn = @convention(c) (DispatchQueue) -> Void
@@ -37,23 +38,26 @@ final class NowPlayingManager {
     ) -> Void
 
     init() {
-        guard let handle = dlopen(
-            "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote",
-            RTLD_NOW
+        guard let bundle = CFBundleCreate(
+            kCFAllocatorDefault,
+            URL(fileURLWithPath: "/System/Library/PrivateFrameworks/MediaRemote.framework") as CFURL
         ) else {
+            DebugLog.log("mr-bundle yok, legacy moda düşüldü")
             registerLegacyObservers()
             return
         }
-        self.handle = handle
+        self.mediaBundle = bundle
 
         guard let register = loadFunction("MRMediaRemoteRegisterForNowPlayingNotifications", as: MRRegisterFn.self)
         else {
+            DebugLog.log("mr-register bulunamadı, legacy moda düşüldü")
             registerLegacyObservers()
             return
         }
         register(DispatchQueue.main)
-        observeDarwinNotification(handle: handle, symbol: "kMRMediaRemoteNowPlayingInfoDidChangeNotification")
-        observeDarwinNotification(handle: handle, symbol: "kMRMediaRemoteNowPlayingApplicationDidChangeNotification")
+        let infoOK = observeDarwinNotification(symbol: "kMRMediaRemoteNowPlayingInfoDidChangeNotification")
+        let appOK = observeDarwinNotification(symbol: "kMRMediaRemoteNowPlayingApplicationDidChangeNotification")
+        DebugLog.log("mr-notify info=\(infoOK) app=\(appOK)")
         refresh()
     }
 
@@ -68,17 +72,20 @@ final class NowPlayingManager {
 
     /// Son bilgiyi MediaRemote'dan çeker (yalnızca olay sonrası çağrılır).
     func refresh() {
-        guard handle != nil,
-              let getInfo = loadFunction("MRMediaRemoteGetNowPlayingInfo", as: MRGetInfoFn.self)
+        guard let getInfo = loadFunction("MRMediaRemoteGetNowPlayingInfo", as: MRGetInfoFn.self)
         else { return }
         getInfo(DispatchQueue.main) { [weak self] info in
-            guard let dict = info as? [String: Any] else { return }
+            guard let dict = info as? [String: Any] else {
+                Task { @MainActor in DebugLog.log("mr-refresh: boş sözlük") }
+                return
+            }
             // Sınırda Sendable değerlere indirge, sonra MainActor'a geç.
             let title = dict["kMRMediaRemoteNowPlayingInfoTitle"] as? String
             let artist = dict["kMRMediaRemoteNowPlayingInfoArtist"] as? String
             let art = dict["kMRMediaRemoteNowPlayingInfoArtworkData"] as? Data
             let rate = dict["kMRMediaRemoteNowPlayingInfoPlaybackRate"] as? Double ?? 0
             Task { @MainActor in
+                DebugLog.log("mr-refresh title=\(title ?? "-") artist=\(artist ?? "-") rate=\(rate)")
                 self?.apply(title: title, artist: artist, artworkData: art, rate: rate)
             }
         }
@@ -105,10 +112,12 @@ final class NowPlayingManager {
 
     // MARK: - Darwin notify
 
-    private func observeDarwinNotification(handle: UnsafeMutableRawPointer, symbol: String) {
-        guard let name = loadNotifyName(handle: handle, symbol: symbol) else { return }
+    @discardableResult
+    private func observeDarwinNotification(symbol: String) -> Bool {
+        guard let name = loadNotifyName(symbol: symbol) else { return false }
         let opaque = Unmanaged.passUnretained(self).toOpaque()
         Self.registerDarwinObserver(opaque: opaque, name: name)
+        return true
     }
 
     /// C-callback dönüşümü @MainActor bağlamında derleyiciyi çakar;
@@ -132,18 +141,22 @@ final class NowPlayingManager {
         )
     }
 
-    /// Sembol `NSString * const` tarzındadır: dlsym'in verdiği adresteki
-    /// pointer yüklenir, sonra doğrulanır. Doğrudan probe crash verir (SIGBUS).
-    private func loadNotifyName(handle: UnsafeMutableRawPointer, symbol: String) -> CFString? {
-        guard let sym = dlsym(handle, symbol) else { return nil }
-        let loaded = sym.load(as: CFString.self)
+    /// Bildirim adı `NSString * const` verisidir: CFBundle API'si deponun
+    /// adresini verir, pointer yüklenir ve tip doğrulanır. Ham probe crash verir.
+    private func loadNotifyName(symbol: String) -> CFString? {
+        guard let mediaBundle,
+              let storage = CFBundleGetDataPointerForName(mediaBundle, symbol as CFString)
+        else { return nil }
+        let loaded = storage.load(as: CFString.self)
         guard CFGetTypeID(loaded) == CFStringGetTypeID() else { return nil }
         return loaded
     }
 
     private func loadFunction<T>(_ symbol: String, as type: T.Type) -> T? {
-        guard let handle, let sym = dlsym(handle, symbol) else { return nil }
-        return unsafeBitCast(sym, to: T.self)
+        guard let mediaBundle,
+              let ptr = CFBundleGetFunctionPointerForName(mediaBundle, symbol as CFString)
+        else { return nil }
+        return unsafeBitCast(ptr, to: T.self)
     }
 
     // MARK: - Eski yol (MediaRemote yoksa)

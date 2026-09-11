@@ -35,6 +35,21 @@ final class NotchViewModel {
     
     private var hoverTask: Task<Void, Never>?
     private var closeTask: Task<Void, Never>?
+    private var dismissTask: Task<Void, Never>?
+
+    /// Fareyle etkileşim yoksa ada 8sn sonra kendiliğinden kapanır.
+    /// Dışarı-tık izni (AX) yokken tek garantili kapanma yoludur; polling değil, tek atımlık Task.
+    private func scheduleAutoDismiss() {
+        dismissTask?.cancel()
+        dismissTask = Task {
+            try? await Task.sleep(nanoseconds: 8_000_000_000)
+            guard !Task.isCancelled else { return }
+            if isExpanded, !isHovered {
+                DebugLog.log("auto-dismiss")
+                collapse()
+            }
+        }
+    }
     
     /// Fare çentik bölgesine girdiğinde / çıktığında tetiklenir
     func onHoverChanged(_ hovering: Bool) {
@@ -77,13 +92,15 @@ final class NotchViewModel {
         withAnimation(.spring(response: 0.34, dampingFraction: 0.76)) {
             isExpanded = true
         }
+        scheduleAutoDismiss()
     }
-    
+
     /// Adayı kapatır
     func collapse() {
         DebugLog.log("collapse")
         hoverTask?.cancel()
         closeTask?.cancel()
+        dismissTask?.cancel()
         performHaptic(.levelChange)
         withAnimation(.spring(response: 0.26, dampingFraction: 0.82)) {
             isExpanded = false

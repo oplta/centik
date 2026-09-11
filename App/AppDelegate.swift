@@ -36,12 +36,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let updater = UpdateManager()
     private let dragMonitor = DragMonitor()
     private var outsideClickMonitor: Any?
+    /// App Nap kilidi: sistem uygulamayı uyutup timer'ları dondurmasın.
+    /// (Info.plist NSAppSleepDisabled ile aynı kapı; dev binary'de plist yok.)
+    private var napBlocker: NSObjectProtocol?
 
     private let panelWidth: CGFloat = 440
     private let panelHeight: CGFloat = 260
     private let retinaBleedOffset: CGFloat = 1.0 // Retina çerçeve içine 1px gömülme payı (sıfır saç teli boşluk)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        napBlocker = ProcessInfo.processInfo.beginActivity(
+            options: .userInitiatedAllowingIdleSystemSleep,
+            reason: "Çentik adası anlık tepki vermeli"
+        )
         setupNotchPanel()
         setupEventMonitors()
         hotkeys.register(
@@ -80,6 +87,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupDragMonitor() {
         dragMonitor.regionProvider = { [weak self] in
+            self?.hoverRegion() ?? .zero
+        }
+        dragMonitor.dropRegionProvider = { [weak self] in
             self?.notchRegion() ?? .zero
         }
         dragMonitor.onEnterRegion = { [weak self] in
@@ -106,6 +116,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DebugLog.log("ax-trusted=\(trusted)")
         guard trusted else { return }
         dragMonitor.start()
+    }
+
+    /// Hover bölgesi: DAR tutulur (çentik + küçük pay) ki menü çubuğu
+    /// esir alınmasın. Sürüklemede geniş bırakma bölgesi kullanılır.
+    private func hoverRegion() -> CGRect {
+        guard let screen = notchPanel?.screen ?? NSScreen.notchScreen else { return .zero }
+        let width = min(screenManager.notchWidth + 60, 320)
+        let height: CGFloat = 48
+        return CGRect(
+            x: screen.frame.midX - width / 2,
+            y: screen.frame.maxY - height,
+            width: width,
+            height: height
+        )
     }
 
     /// Sürükleme bölgesi: panelin durduğu ekranın üst-ortası (panel alanıyla aynı).
