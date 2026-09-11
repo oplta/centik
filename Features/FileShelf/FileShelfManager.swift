@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Raftaki tek dosya: yer imi (bookmark) ile yeniden başlatmalara dayanır.
@@ -113,6 +114,33 @@ final class FileShelfManager {
     func clearUnpinned() {
         items.removeAll { !$0.isPinned }
         save()
+    }
+
+    /// Kart tıklaması: dosyayı varsayılan uygulamayla açar.
+    /// Çözümlenemeyen (silinmiş) öğe raftan düşer.
+    func open(id: FileItem.ID) {
+        guard let item = items.first(where: { $0.id == id }) else { return }
+        guard withAccess(item, { NSWorkspace.shared.open($0) }) != nil else {
+            items.removeAll { $0.id == id }
+            save()
+            return
+        }
+    }
+
+    /// Sağ-tık: Finder'da gösterir.
+    func reveal(id: FileItem.ID) {
+        guard let item = items.first(where: { $0.id == id }) else { return }
+        withAccess(item) { NSWorkspace.shared.activateFileViewerSelecting([$0]) }
+    }
+
+    /// Bookmark çözümleme + sandbox kapsamı.
+    /// Not: korumalı moda geçilirse open sonrası erişim hedef uygulamaya
+    /// powerbox ile taşınır; bu çağrı yalnızca çözümleme anını kapsar.
+    private func withAccess<T>(_ item: FileItem, _ body: (URL) -> T) -> T? {
+        guard let url = item.resolveURL() else { return nil }
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+        return body(url)
     }
 
     private var unpinnedCount: Int { items.filter { !$0.isPinned }.count }

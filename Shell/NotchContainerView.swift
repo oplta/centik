@@ -248,32 +248,15 @@ struct NotchContainerView: View {
                 .background(theme.border)
                 .padding(.horizontal, 12)
 
-            HStack(spacing: CentikTheme.md) {
-                ModuleCard(
-                    theme: theme,
-                    icon: "tray.and.arrow.down",
-                    artwork: nil,
-                    iconColor: theme.primary,
-                    title: shelf.items.isEmpty ? "Dosya Bırak" : "\(shelf.items.count) dosya",
-                    subtitle: shelf.items.first?.name ?? "Bırak, dursun",
-                    accessibilityLabel: "Dosya rafı",
-                    accessibilityHint: "Dosyaları geçici tutmak için bırakın",
-                    onTap: { viewModel.performHaptic() }
-                )
-                ModuleCard(
-                    theme: theme,
-                    icon: nowPlaying.isPlaying ? "waveform" : "music.note",
-                    artwork: nowPlaying.artwork,
-                    iconColor: theme.accent,
-                    title: nowPlaying.headline,
-                    subtitle: nowPlaying.subline,
-                    accessibilityLabel: "Şimdi çalıyor",
-                    accessibilityHint: "Medya kontrollerini açar",
-                    onTap: { viewModel.performHaptic(.generic) }
-                )
+            ShelfStrip(theme: theme, shelf: shelf)
+                .padding(.horizontal, 14)
+                .padding(.top, 12)
+
+            MediaRow(theme: theme, nowPlaying: nowPlaying) {
+                viewModel.performHaptic(.generic)
             }
             .padding(.horizontal, 14)
-            .padding(.top, 12)
+            .padding(.top, CentikTheme.sm)
 
             // Alt kısayol ipuçları (8pt ızgara)
             HStack(spacing: CentikTheme.md) {
@@ -293,18 +276,12 @@ struct NotchContainerView: View {
     }
 }
 
-// MARK: - Modül Kartı (§5.2–§5.3: #111522 zemin, 16px yarıçap, hover wash)
+// MARK: - Medya Satırı (kompakt: kapak + parça; transport v0.3'te buraya)
 
 // Semantik kontrol: gerçek Button — klavye, VoiceOver, Switch Control ile çalışır.
-private struct ModuleCard: View {
+private struct MediaRow: View {
     let theme: any IslandTheme
-    let icon: String
-    let artwork: NSImage?
-    let iconColor: Color
-    let title: String
-    let subtitle: String
-    let accessibilityLabel: String
-    let accessibilityHint: String
+    let nowPlaying: NowPlayingManager
     let onTap: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -312,57 +289,68 @@ private struct ModuleCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: CentikTheme.xs + 2) {
-                if let artwork {
-                    Image(nsImage: artwork)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 28, height: 28)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                        .accessibilityHidden(true)
-                } else {
-                    Image(systemName: icon)
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(iconColor)
-                        .frame(height: 24)
+            HStack(spacing: 10) {
+                Group {
+                    if let artwork = nowPlaying.artwork {
+                        Image(nsImage: artwork)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: nowPlaying.isPlaying ? "waveform" : "music.note")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(theme.accent)
+                    }
+                }
+                .frame(width: 32, height: 32)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(nowPlaying.headline)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(theme.textPrimary)
+                        .lineLimit(1)
+                    Text(nowPlaying.subline)
+                        .font(.system(size: 9))
+                        .foregroundColor(theme.textMuted)
+                        .lineLimit(1)
+                }
+                Spacer()
+                if nowPlaying.isPlaying {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(theme.accentSoft)
                         .accessibilityHidden(true)
                 }
-                Text(title)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(theme.textPrimary)
-                Text(subtitle)
-                    .font(.system(size: 9))
-                    .foregroundColor(theme.textMuted)
             }
+            .padding(.horizontal, 12)
             .frame(maxWidth: .infinity)
-            .frame(height: 108)
+            .frame(height: 48)
             .background(
-                RoundedRectangle(cornerRadius: CentikTheme.cardRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(isHovered ? theme.hoverWash : .clear)
                     .background(
-                        RoundedRectangle(cornerRadius: CentikTheme.cardRadius, style: .continuous)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .fill(theme.card)
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: CentikTheme.cardRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(theme.cardInnerStroke, lineWidth: 1)
                     .padding(0.5)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: CentikTheme.cardRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(isHovered ? theme.primary.opacity(0.6) : theme.border, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
-        .scaleEffect(isHovered && !reduceMotion ? 1.02 : 1.0, anchor: .center)
         .animation(
             reduceMotion ? nil : CentikTheme.hoverSpring,
             value: isHovered
         )
         .onHover { isHovered = $0 }
-        .accessibilityLabel(accessibilityLabel)
-        .accessibilityHint(accessibilityHint)
+        .accessibilityLabel("Şimdi çalıyor: \(nowPlaying.headline)")
+        .accessibilityHint("Medya kontrolleri v0.3'te gelir")
     }
 }
 

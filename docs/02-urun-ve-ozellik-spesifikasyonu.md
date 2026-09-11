@@ -79,7 +79,7 @@ Detay: `docs/05 §4`.
 ### v0.2 — Raf gerçekten kullanışlı (sıradaki)
 - [x] **DragMonitor:** global fare + drag-pasteboard ile sürükleme çentik bölgesine girince aç, çıkınca kapat (Boring `DragDetector` patterni; ilk açılışta Erişilebilirlik izni ister).
 - [ ] **Çok tipli drop:** dosya + link + metin merdiveni (Boring `ShelfDropService` sırası); söz verilen dosyalar (promise) dahil.
-- [ ] **Raf ızgarası:** küçük resimli kartlar (QLThumbnail), pin rozeti, sağ-tık menü (Aç / AirDrop / Sil).
+- [x] **Raf ızgarası:** küçük resimli kartlar (QLThumbnail), pin rozeti, sağ-tık menü (Aç / Finder'da Göster / Kaldır).
 - [ ] **Raftan sürükle-bırak:** dosyayı raftan Finder/Slack'e geri taşıma + QuickLook (Boşluk) önizleme.
 - [ ] **Kalıcılık:** bookmark kaydet/yükle; açılışta geçersizleri temizle.
 

@@ -9,9 +9,9 @@ final class NotchViewModel {
     var isExpanded: Bool = false
     var isHovered: Bool = false
     
-    // Boyut kuralları
+    // Boyut kuralları (06 §5.1: içerik 180–250 arası dinamik)
     let expandedWidth: CGFloat = 400
-    let expandedHeight: CGFloat = 220
+    let expandedHeight: CGFloat = 250
     
     func currentWidth(hasNotch: Bool, notchWidth: CGFloat) -> CGFloat {
         if isExpanded {

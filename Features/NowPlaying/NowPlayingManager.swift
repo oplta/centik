@@ -25,10 +25,10 @@ final class NowPlayingManager {
         return "Müzik çalmıyor"
     }
 
-    // nonisolated(unsafe) gerekçesi: handle yalnızca @MainActor init içinde,
-    // obje dışarı kaçmadan önce yazılır; deinit dışında okunmaz.
-    nonisolated(unsafe) private var handle: UnsafeMutableRawPointer?
-    nonisolated(unsafe) private var legacyObservers: [NSObjectProtocol] = []
+    // Gözlem dışı + nonisolated(unsafe) gerekçesi: UI state'i değildir;
+    // yalnızca @MainActor init içinde, obje kaçmadan yazılır.
+    @ObservationIgnored nonisolated(unsafe) private var handle: UnsafeMutableRawPointer?
+    @ObservationIgnored nonisolated(unsafe) private var legacyObservers: [NSObjectProtocol] = []
 
     private typealias MRRegisterFn = @convention(c) (DispatchQueue) -> Void
     private typealias MRGetInfoFn = @convention(c) (
