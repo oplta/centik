@@ -58,6 +58,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             Task { @MainActor in self?.ensureDragMonitoring() }
         }
+        DebugLog.log(
+            "launch screen=\(NSScreen.notchScreen.map { NSStringFromRect($0.frame) } ?? "-") " +
+            "hasNotch=\(screenManager.hasNotch) notchWidth=\(screenManager.notchWidth) " +
+            "panel=\(notchPanel.map { NSStringFromRect($0.frame) } ?? "-")"
+        )
+        // Açılış flaşı: ada bir kez açılıp kapanır — hem render kanıtı hem konum göstergesi.
+        viewModel.expand()
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            viewModel.collapse()
+        }
     }
 
     /// ⌥V: pano görünümü v0.4'e kadar paneli açar.
@@ -77,6 +88,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragMonitor.onExitRegion = { [weak self] in
             self?.viewModel.onHoverChanged(false)
         }
+        dragMonitor.onHoverEnter = { [weak self] in
+            self?.viewModel.onHoverChanged(true)
+        }
+        dragMonitor.onHoverExit = { [weak self] in
+            self?.viewModel.onHoverChanged(false)
+        }
     }
 
     /// İzin yoksa sistem penceresini bir kez gösterir; ret denenirse
@@ -85,13 +102,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Not: kAXTrustedCheckOptionPrompt extern global'i Swift 6'da paylaşılan
         // durum sayılır; değeri sabit string olarak verilir (resmi anahtar adı).
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
-        guard AXIsProcessTrustedWithOptions(options) else { return }
+        let trusted = AXIsProcessTrustedWithOptions(options)
+        DebugLog.log("ax-trusted=\(trusted)")
+        guard trusted else { return }
         dragMonitor.start()
     }
 
-    /// Sürükleme bölgesi: ekran üst-orta (panel alanıyla aynı).
+    /// Sürükleme bölgesi: panelin durduğu ekranın üst-ortası (panel alanıyla aynı).
+    /// NSScreen.main kullanılmaz — harici monitörde yanlış ekrana düşer.
     private func notchRegion() -> CGRect {
-        guard let screen = NSScreen.main else { return .zero }
+        guard let screen = notchPanel?.screen ?? NSScreen.notchScreen else { return .zero }
         let width: CGFloat = 440
         let height: CGFloat = 260
         return CGRect(

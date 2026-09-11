@@ -52,10 +52,12 @@ final class HotkeyManager {
     private func registerKey(id: UInt32, modifiers: UInt32, keyCode: UInt32) {
         var ref: EventHotKeyRef?
         let hotID = EventHotKeyID(signature: Self.signature, id: id)
-        guard RegisterEventHotKey(
+        let status = RegisterEventHotKey(
             keyCode, modifiers, hotID,
             GetApplicationEventTarget(), 0, &ref
-        ) == noErr, let ref else { return }
+        )
+        DebugLog.log("hotkey id=\(id) status=\(status)")
+        guard status == noErr, let ref else { return }
         hotKeyRefs.append(ref)
     }
 }

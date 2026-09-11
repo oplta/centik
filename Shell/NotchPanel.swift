@@ -13,7 +13,9 @@ final class NotchPanel: NSPanel {
         isOpaque = false
         backgroundColor = .clear
         hasShadow = false
-        level = .screenSaver
+        // Menü çubuğunun üstünde (24+3) ama screenSaver altında:
+        // screenSaver seviyesinde hover/fare olayları gelmez (teşhis edildi).
+        level = .mainMenu + 3
         collectionBehavior = [
             .canJoinAllSpaces,
             .fullScreenAuxiliary,

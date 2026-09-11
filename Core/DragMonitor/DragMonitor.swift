@@ -2,9 +2,9 @@ import AppKit
 import UniformTypeIdentifiers
 
 /// Sürükleme-bölge izleyici (Boring `DragDetector` patterni, sıfırdan yazım).
-/// SwiftUI hover/drop-hedefi sürükleme sırasında güvenilmez olduğu için:
-/// global fare + drag-pasteboard değişimi + ekran-bölge testiyle çalışır.
-/// Yalnızca gerçek bir sürükleme varken uyanır; boşta maliyeti yoktur.
+/// SwiftUI hover/drop-hedefi çentik şeridinde güvenilmez olduğu için (olaylar
+/// menü çubuğuna düşer): global fare + drag-pasteboard + ekran-bölge testiyle çalışır.
+/// Yalnızca fare hareket ederken/sürükleme varken uyanır; boşta maliyeti yoktur.
 /// Gereksinim: Erişilebilirlik izni (AppDelegate ister).
 @MainActor
 final class DragMonitor {
@@ -12,10 +12,13 @@ final class DragMonitor {
     var regionProvider: (() -> CGRect)?
     var onEnterRegion: (() -> Void)?
     var onExitRegion: (() -> Void)?
+    var onHoverEnter: (() -> Void)?
+    var onHoverExit: (() -> Void)?
 
     private var mouseDownMonitor: Any?
     private var mouseDraggedMonitor: Any?
     private var mouseUpMonitor: Any?
+    private var mouseMovedMonitor: Any?
 
     private let dragPasteboard = NSPasteboard(name: .drag)
     private var pasteboardChangeCount = -1
@@ -53,15 +56,37 @@ final class DragMonitor {
                 self.pasteboardChangeCount = -1
             }
         }
+        // Sürükleme yokken konuma göre hover: çentik şeridinde SwiftUI
+        // tracking çalışmadığı için bölge testiyle aç/kapa.
+        mouseMovedMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in self.handleMoved() }
+        }
+    }
+
+    private func handleMoved() {
+        // Sürükleme anında drag mantığı söz sahibidir.
+        guard !isDragging, let regionProvider else { return }
+        let inside = regionProvider().contains(NSEvent.mouseLocation)
+        if inside, !hasEnteredRegion {
+            hasEnteredRegion = true
+            DebugLog.log("hover-enter region")
+            onHoverEnter?()
+        } else if !inside, hasEnteredRegion {
+            hasEnteredRegion = false
+            DebugLog.log("hover-exit region")
+            onHoverExit?()
+        }
     }
 
     func stop() {
-        for monitor in [mouseDownMonitor, mouseDraggedMonitor, mouseUpMonitor] {
+        for monitor in [mouseDownMonitor, mouseDraggedMonitor, mouseUpMonitor, mouseMovedMonitor] {
             if let monitor { NSEvent.removeMonitor(monitor) }
         }
         mouseDownMonitor = nil
         mouseDraggedMonitor = nil
         mouseUpMonitor = nil
+        mouseMovedMonitor = nil
         isDragging = false
         isContentDragging = false
         hasEnteredRegion = false
@@ -87,9 +112,11 @@ final class DragMonitor {
         let inside = region.contains(point)
         if inside, !hasEnteredRegion {
             hasEnteredRegion = true
+            DebugLog.log("drag-enter region")
             onEnterRegion?()
         } else if !inside, hasEnteredRegion {
             hasEnteredRegion = false
+            DebugLog.log("drag-exit region")
             onExitRegion?()
         }
     }

@@ -23,6 +23,12 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp ".build/release/Centik" "$APP/Contents/MacOS/Centik"
+if [[ -d ".build/release/Sparkle.framework" ]]; then
+    echo "==> Sparkle.framework gömülüyor"
+    mkdir -p "$APP/Contents/Frameworks"
+    cp -R ".build/release/Sparkle.framework" "$APP/Contents/Frameworks/"
+    install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/Centik"
+fi
 sed -e "s/@APP_VERSION@/$VERSION/" \
     -e "s/@BUILD_NUMBER@/$BUILD/" \
     -e "s/@SPARKLE_PUBLIC_KEY@/$KEY/" \

@@ -25,7 +25,8 @@ let package = Package(
                 "LICENSE",
                 "README.md",
                 "packaging",
-                "scripts"
+                "scripts",
+                "dist"
             ],
             sources: [
                 "App",

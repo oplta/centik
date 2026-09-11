@@ -57,7 +57,7 @@ final class NotchPanel: NSPanel {
         self.isOpaque = false
         self.backgroundColor = .clear
         self.hasShadow = false
-        self.level = .screenSaver // Menü bar ve tam ekran pencerelerinin üstünde kalır
+        self.level = .mainMenu + 3 // Menü bar üstü; screenSaver seviyesinde hover gelmez
         self.collectionBehavior = [
             .canJoinAllSpaces,
             .fullScreenAuxiliary,

@@ -38,6 +38,7 @@ final class NotchViewModel {
     
     /// Fare çentik bölgesine girdiğinde / çıktığında tetiklenir
     func onHoverChanged(_ hovering: Bool) {
+        DebugLog.log("hover=\(hovering) expanded=\(isExpanded)")
         isHovered = hovering
         
         if hovering {
@@ -69,6 +70,7 @@ final class NotchViewModel {
     
     /// Adayı akıcı yay animasyonuyla açar
     func expand() {
+        DebugLog.log("expand")
         hoverTask?.cancel()
         closeTask?.cancel()
         performHaptic(.alignment)
@@ -79,6 +81,7 @@ final class NotchViewModel {
     
     /// Adayı kapatır
     func collapse() {
+        DebugLog.log("collapse")
         hoverTask?.cancel()
         closeTask?.cancel()
         performHaptic(.levelChange)

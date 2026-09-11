@@ -1,3 +1,6 @@
+# Build çıktıları
+dist/
+
 # Xcode & Swift
 .build/
 DerivedData/
