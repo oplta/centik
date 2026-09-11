@@ -27,25 +27,25 @@ jobs:
           CODESIGN_IDENTITY: ${{ secrets.CODESIGN_IDENTITY }}
         run: ./scripts/package-app.sh
 
-      # Sertifika yoksa imza ad-hoc kalır; aşağıdaki adımlar secret'lar
-      # tanımlanmadan pas geçilir (dağıtım öncesi docs/08'deki listeye bak).
+      # Sertifika yoksa imza ad-hoc kalır; secret'sız adım script içinde
+      # güvenli pas geçer (dağıtım öncesi docs/08'deki listeye bak).
       - name: Sertifikayı içe aktar
-        if: ${{ secrets.APPLE_CERT_P12 != '' }}
         env:
           CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
           CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
         run: |
+          [ -n "$CERT_P12" ] || { echo "secret yok, pas geçiliyor"; exit 0; }
           echo "$CERT_P12" | base64 -d > /tmp/cert.p12
           security import /tmp/cert.p12 -P "$CERT_PASSWORD" -T /usr/bin/codesign
           rm /tmp/cert.p12
 
       - name: Noterize et
-        if: ${{ secrets.APPLE_ID != '' }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
+          [ -n "$APPLE_ID" ] || { echo "secret yok, pas geçiliyor"; exit 0; }
           ditto -c -k --keepParent dist/Centik.app dist/Centik-notarize.zip
           xcrun notarytool submit dist/Centik-notarize.zip \
             --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
